@@ -48,11 +48,20 @@ event({submit, {avatar_upload, _Args}, _TriggerId, _TargetId}, Context) ->
             case File of
                 #upload{filename=OriginalFilename, tmpfile=TmpFile} ->
                     Props = [{title, list_to_binary(binary_to_list(Title)++" Avatar")}, {original_filename, OriginalFilename}],
-                    case m_rsc:o(UserId, has_avatar, 1, Context) of
-                        undefined ->
-                            handle_media_upload(UserId, fun(Ctx) -> m_media:insert_file(TmpFile, Props, Ctx) end, Context);
-                        Id ->
-                            handle_media_upload(Id, UserId, fun(Id, Ctx) -> m_media:replace_file(TmpFile, Id, Props, Ctx) end, Context)
+                    case z_media_identify:identify(File, Context) of
+                        {ok, Info} ->
+                            Mime = proplists:get_value(mime, Info),
+                            case Mime of
+                                "image/jpeg" ->
+                                    case m_rsc:o(UserId, has_avatar, 1, Context) of
+                                        undefined ->
+                                            handle_media_upload(UserId, fun(Ctx) -> m_media:insert_file(TmpFile, Props, Ctx) end, Context);
+                                        Id ->
+                                            handle_media_upload(Id, UserId, fun(Id, Ctx) -> m_media:replace_file(TmpFile, Id, Ctx) end, Context)
+                                    end;
+                                _Other -> z_render:update("notifications", "<p>Your avatar must be a JPEG</p>", Context)
+                            end;
+                        {error, _Reason} -> z_render:update("notifications", "<p>Error uploading avatar</p>", Context)
                     end;
                 _ ->
                     Context
