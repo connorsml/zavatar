@@ -74,7 +74,8 @@ event({submit, {avatar_upload, _Args}, _TriggerId, _TargetId}, Context) ->
 handle_media_upload(Id, _UserId, ReplaceFun, Context) ->
     case ReplaceFun(Id, Context) of
         {ok, _} ->
-            z_render:update("notifications", "<p>Uploaded Successfully</p>", Context);
+            Html = z_template:render("_render_avatar.tpl", [], Context),
+            z_render:update("avatar", Html, Context);
         {error, eacces} ->
             z_render:update("notifications", "<p>Access denied</p>", Context);
         {error, _} ->
@@ -96,7 +97,8 @@ handle_media_upload(UserId, InsertFun, Context) ->
     Result = z_db:transaction(F, Context),
     case Result of
         {ok, _MediaId} ->
-            z_render:update("notifications", "<p>Avatar uploaded successfully</p>", Context);
+            Html = z_template:render("_render_avatar.tpl", [], Context),
+            z_render:update("avatar", Html, Context);
         {error, _Error} ->
             z_render:update("notifications", "<p>Upload failed</p>", Context)
     end.
