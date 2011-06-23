@@ -1,3 +1,4 @@
+<div id="avatar">
 {% with m.acl.user as user_id %}
     {% if user_id  %}
         {% with m.rsc[user_id] as user %}
@@ -9,3 +10,4 @@
         {% endwith %}
     {% endif %}
 {% endwith %}
+</div>
